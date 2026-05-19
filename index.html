@@ -362,30 +362,6 @@
       color: var(--red);
     }
 
-    /* Save indicator */
-    .save-indicator {
-      font-family: var(--mono);
-      font-size: 9px;
-      letter-spacing: 0.1em;
-      color: var(--text-faint);
-      text-transform: uppercase;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      transition: color 0.3s;
-    }
-
-    .save-indicator.saved {
-      color: var(--accent2);
-    }
-
-    .save-indicator .dot {
-      width: 5px;
-      height: 5px;
-      border-radius: 50%;
-      background: currentColor;
-    }
-
     /* Footer */
     footer {
       margin-top: 28px;
@@ -441,10 +417,6 @@
             </div>
           </div>
           <div style="display:flex; align-items:center; gap:12px; margin-top:8px;">
-            <span class="save-indicator" id="save-indicator">
-              <span class="dot"></span>
-              <span id="save-text">belum ada data</span>
-            </span>
             <button class="reset-btn" onclick="resetAll()">
               <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M1 6a5 5 0 1 0 1.5-3.5"/>
@@ -538,17 +510,7 @@
       }
     }
 
-    function showSaveIndicator(saved) {
-      const el = document.getElementById('save-indicator');
-      const text = document.getElementById('save-text');
-      if (saved) {
-        el.className = 'save-indicator saved';
-        text.textContent = 'tersimpan';
-      } else {
-        el.className = 'save-indicator';
-        text.textContent = 'belum ada data';
-      }
-    }
+    function showSaveIndicator(saved) {}
 
     function recalc() {
       const rows = document.querySelectorAll('.row');
