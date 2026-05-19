@@ -128,20 +128,26 @@
     /* Table head */
     .table-head {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr 44px;
+      grid-template-columns: 44px 1fr 1fr 1fr 44px;
       gap: 0;
       background: var(--surface2);
-      border-bottom: 1px solid var(--border);
+      border-bottom: 2px solid var(--accent2);
       padding: 0 16px;
     }
 
     .table-head span {
       font-family: var(--mono);
-      font-size: 10px;
-      letter-spacing: 0.15em;
-      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      color: var(--text);
       text-transform: uppercase;
-      padding: 14px 0;
+      padding: 16px 0;
+    }
+
+    .table-head span.col-no {
+      color: var(--text-muted);
+      font-size: 10px;
     }
 
     /* Rows container */
@@ -153,7 +159,7 @@
     /* Each row */
     .row {
       display: grid;
-      grid-template-columns: 1fr 1fr 1fr 44px;
+      grid-template-columns: 44px 1fr 1fr 1fr 44px;
       border-bottom: 1px solid var(--border);
       animation: rowIn 0.25s ease forwards;
       opacity: 0;
@@ -196,6 +202,17 @@
     .row input[type="number"]::-webkit-inner-spin-button,
     .row input[type="number"]::-webkit-outer-spin-button {
       -webkit-appearance: none;
+    }
+
+    /* NO cell */
+    .no-cell {
+      display: flex;
+      align-items: center;
+      padding: 14px 0 14px 4px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--text-muted);
+      justify-content: center;
     }
 
     /* Weight cell */
@@ -340,6 +357,7 @@
 
     <div class="card">
       <div class="table-head">
+        <span class="col-no">No</span>
         <span>Kode</span>
         <span>Jumlah</span>
         <span>Bobot</span>
@@ -388,6 +406,7 @@
       row.className = 'row';
       row.dataset.id = id;
       row.innerHTML = `
+        <div class="no-cell row-num"></div>
         <input type="text" placeholder="KODE" oninput="recalc()" />
         <input type="number" placeholder="0" min="0" oninput="recalc()" />
         <div class="weight-cell">
@@ -423,6 +442,12 @@
       const rows = document.querySelectorAll('.row');
       let total = 0;
       let assetCount = 0;
+
+      // Renumber rows
+      rows.forEach((row, i) => {
+        const numEl = row.querySelector('.row-num');
+        if (numEl) numEl.textContent = i + 1;
+      });
 
       rows.forEach(row => {
         const val = parseFloat(row.querySelector('input[type="number"]').value) || 0;
