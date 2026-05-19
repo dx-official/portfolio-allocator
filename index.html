@@ -333,8 +333,8 @@
 <body>
   <div class="wrapper">
     <header>
-      <div class="tag">equity tracker</div>
-      <h1>Portfolio <span>Allocation</span></h1>
+      <div class="tag">Your Personal</div>
+      <h1>Portfolio<span>Allocator</span></h1>
       <p class="subtitle">Masukkan kode & jumlah, bobot akan dihitung otomatis</p>
     </header>
 
@@ -374,7 +374,7 @@
       </div>
     </div>
 
-    <footer>portfolio allocation tracker &mdash; github pages ready</footer>
+    <footer>Free tools for tracking your portfolio allocation</footer>
   </div>
 
   <script>
@@ -388,7 +388,7 @@
       row.className = 'row';
       row.dataset.id = id;
       row.innerHTML = `
-        <input type="text" placeholder="ADHE" oninput="recalc()" />
+        <input type="text" placeholder="KODE" oninput="recalc()" />
         <input type="number" placeholder="0" min="0" oninput="recalc()" />
         <div class="weight-cell">
           <div class="bar"></div>
