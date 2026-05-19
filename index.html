@@ -336,6 +336,56 @@
       color: var(--red);
     }
 
+    /* Reset button */
+    .reset-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: 1px solid #3a2020;
+      border-radius: 6px;
+      color: #7f4040;
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-transform: uppercase;
+      margin-top: 10px;
+      align-self: flex-end;
+    }
+
+    .reset-btn:hover {
+      background: rgba(248, 113, 113, 0.08);
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    /* Save indicator */
+    .save-indicator {
+      font-family: var(--mono);
+      font-size: 9px;
+      letter-spacing: 0.1em;
+      color: var(--text-faint);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.3s;
+    }
+
+    .save-indicator.saved {
+      color: var(--accent2);
+    }
+
+    .save-indicator .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
     /* Footer */
     footer {
       margin-top: 28px;
@@ -375,18 +425,33 @@
           Tambah Baris
         </button>
 
-        <div class="summary">
-          <div class="summary-item">
-            <span class="summary-label">Jenis</span>
-            <span class="summary-value" id="asset-count">0</span>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:0;">
+          <div class="summary">
+            <div class="summary-item">
+              <span class="summary-label">Jenis</span>
+              <span class="summary-value" id="asset-count">0</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Total</span>
+              <span class="summary-value" id="total-sum">0</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Percentage</span>
+              <span class="summary-value" id="total-weight">0%</span>
+            </div>
           </div>
-          <div class="summary-item">
-            <span class="summary-label">Total</span>
-            <span class="summary-value" id="total-sum">0</span>
-          </div>
-          <div class="summary-item">
-            <span class="summary-label">Percentage</span>
-            <span class="summary-value" id="total-weight">0%</span>
+          <div style="display:flex; align-items:center; gap:12px; margin-top:8px;">
+            <span class="save-indicator" id="save-indicator">
+              <span class="dot"></span>
+              <span id="save-text">belum ada data</span>
+            </span>
+            <button class="reset-btn" onclick="resetAll()">
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 6a5 5 0 1 0 1.5-3.5"/>
+                <polyline points="1,1 1,4 4,4"/>
+              </svg>
+              Reset
+            </button>
           </div>
         </div>
       </div>
@@ -397,8 +462,9 @@
 
   <script>
     let rowId = 0;
+    let saveTimeout = null;
 
-    function addRow() {
+    function addRow(code = '', amount = '') {
       const id = rowId++;
       const container = document.getElementById('rows');
 
@@ -407,8 +473,8 @@
       row.dataset.id = id;
       row.innerHTML = `
         <div class="no-cell row-num"></div>
-        <input type="text" placeholder="KODE" oninput="recalc()" />
-        <input type="number" placeholder="0" min="0" oninput="recalc()" />
+        <input type="text" placeholder="KODE" oninput="recalc()" value="${code}" />
+        <input type="number" placeholder="0" min="0" oninput="recalc()" value="${amount}" />
         <div class="weight-cell">
           <div class="bar"></div>
           <span>—</span>
@@ -422,19 +488,65 @@
       `;
 
       container.appendChild(row);
-      row.querySelector('input[type="text"]').focus();
+      if (!code) row.querySelector('input[type="text"]').focus();
       recalc();
     }
 
     function deleteRow(id) {
       const rows = document.querySelectorAll('.row');
-      if (rows.length <= 1) return; // keep at least 1 row
+      if (rows.length <= 1) return;
       const row = document.querySelector(`.row[data-id="${id}"]`);
       if (row) {
         row.style.transition = 'opacity 0.2s, transform 0.2s';
         row.style.opacity = '0';
         row.style.transform = 'translateX(10px)';
         setTimeout(() => { row.remove(); recalc(); }, 200);
+      }
+    }
+
+    function resetAll() {
+      if (!confirm('Reset semua data? Tindakan ini tidak bisa dibatalkan.')) return;
+      document.getElementById('rows').innerHTML = '';
+      rowId = 0;
+      localStorage.removeItem('portfolio_rows');
+      addRow();
+      showSaveIndicator(false);
+    }
+
+    function saveToStorage() {
+      const rows = document.querySelectorAll('.row');
+      const data = [];
+      rows.forEach(row => {
+        const code = row.querySelector('input[type="text"]').value;
+        const amount = row.querySelector('input[type="number"]').value;
+        data.push({ code, amount });
+      });
+      localStorage.setItem('portfolio_rows', JSON.stringify(data));
+      showSaveIndicator(true);
+    }
+
+    function loadFromStorage() {
+      const saved = localStorage.getItem('portfolio_rows');
+      if (!saved) return false;
+      try {
+        const data = JSON.parse(saved);
+        if (!data.length) return false;
+        data.forEach(item => addRow(item.code, item.amount));
+        return true;
+      } catch(e) {
+        return false;
+      }
+    }
+
+    function showSaveIndicator(saved) {
+      const el = document.getElementById('save-indicator');
+      const text = document.getElementById('save-text');
+      if (saved) {
+        el.className = 'save-indicator saved';
+        text.textContent = 'tersimpan';
+      } else {
+        el.className = 'save-indicator';
+        text.textContent = 'belum ada data';
       }
     }
 
@@ -470,7 +582,6 @@
         }
       });
 
-      // Update summary
       document.getElementById('asset-count').textContent = assetCount;
       document.getElementById('total-sum').textContent = total.toLocaleString('id-ID');
 
@@ -482,10 +593,18 @@
         totalWeightEl.textContent = '0%';
         totalWeightEl.className = 'summary-value';
       }
+
+      // Auto-save with debounce
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => {
+        saveToStorage();
+      }, 600);
     }
 
-    // Init with 1 row
-    addRow();
+    // Init: load saved or start fresh
+    const loaded = loadFromStorage();
+    if (!loaded) addRow();
+    else showSaveIndicator(true);
   </script>
 </body>
 </html>
