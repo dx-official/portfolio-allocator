@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio Allocation Tracker</title>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0c0f0a;
+      --surface: #141810;
+      --surface2: #1c2218;
+      --border: #2a3325;
+      --accent: #a3e635;
+      --accent2: #65a30d;
+      --accent-dim: rgba(163, 230, 53, 0.12);
+      --text: #e8f0e0;
+      --text-muted: #6b7f5e;
+      --text-faint: #3a4a30;
+      --red: #f87171;
+      --mono: 'Space Mono', monospace;
+      --sans: 'DM Sans', sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px 80px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--text-faint) 1px, transparent 1px),
+        linear-gradient(90deg, var(--text-faint) 1px, transparent 1px);
+      background-size: 40px 40px;
+      opacity: 0.15;
+      pointer-events: none;
+    }
+
+    /* Glow blob */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 600px;
+      height: 400px;
+      background: radial-gradient(ellipse, rgba(163,230,53,0.07) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .wrapper {
+      width: 100%;
+      max-width: 760px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Header */
+    header {
+      margin-bottom: 40px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .tag {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      color: var(--accent);
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tag::before {
+      content: '';
+      display: inline-block;
+      width: 18px;
+      height: 1px;
+      background: var(--accent);
+    }
+
+    h1 {
+      font-family: var(--mono);
+      font-size: clamp(22px, 4vw, 32px);
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+
+    h1 span {
+      color: var(--accent);
+    }
+
+    .subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-weight: 300;
+      margin-top: 4px;
+    }
+
+    /* Card */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    /* Table head */
+    .table-head {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 44px;
+      gap: 0;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      padding: 0 16px;
+    }
+
+    .table-head span {
+      font-family: var(--mono);
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      padding: 14px 0;
+    }
+
+    /* Rows container */
+    #rows {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Each row */
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr 44px;
+      border-bottom: 1px solid var(--border);
+      animation: rowIn 0.25s ease forwards;
+      opacity: 0;
+      transform: translateY(6px);
+    }
+
+    @keyframes rowIn {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .row:last-child {
+      border-bottom: none;
+    }
+
+    .row input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: var(--mono);
+      font-size: 13px;
+      padding: 14px 16px;
+      width: 100%;
+      transition: background 0.15s;
+    }
+
+    .row input::placeholder {
+      color: var(--text-faint);
+    }
+
+    .row input:focus {
+      background: var(--accent-dim);
+    }
+
+    .row input[type="text"] {
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .row input[type="number"]::-webkit-inner-spin-button,
+    .row input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+    }
+
+    /* Weight cell */
+    .weight-cell {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--accent);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .weight-cell .bar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      background: var(--accent-dim);
+      transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 0;
+    }
+
+    .weight-cell span {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Delete button */
+    .del-btn {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--text-faint);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.15s;
+      font-size: 16px;
+    }
+
+    .del-btn:hover {
+      color: var(--red);
+    }
+
+    /* Bottom bar */
+    .bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      border-top: 1px solid var(--border);
+      background: var(--surface2);
+    }
+
+    /* Add button */
+    .add-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      font-family: var(--sans);
+      font-size: 12px;
+      font-weight: 500;
+      padding: 7px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      letter-spacing: 0.02em;
+    }
+
+    .add-btn:hover {
+      background: var(--accent-dim);
+      border-color: var(--accent2);
+      color: var(--accent);
+    }
+
+    .add-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    /* Summary */
+    .summary {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .summary-item {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 1px;
+    }
+
+    .summary-label {
+      font-size: 9px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      font-family: var(--mono);
+    }
+
+    .summary-value {
+      font-family: var(--mono);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      transition: color 0.2s;
+    }
+
+    .summary-value.valid {
+      color: var(--accent);
+    }
+
+    .summary-value.over {
+      color: var(--red);
+    }
+
+    /* Footer */
+    footer {
+      margin-top: 28px;
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-faint);
+      font-family: var(--mono);
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header>
+      <div class="tag">equity tracker</div>
+      <h1>Portfolio <span>Allocation</span><br>Tracker</h1>
+      <p class="subtitle">Masukkan kode saham & jumlah — bobot dihitung otomatis</p>
+    </header>
+
+    <div class="card">
+      <div class="table-head">
+        <span>Kode</span>
+        <span>Jumlah</span>
+        <span>Bobot</span>
+        <span></span>
+      </div>
+
+      <div id="rows"></div>
+
+      <div class="bottom-bar">
+        <button class="add-btn" onclick="addRow()">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="8" y1="2" x2="8" y2="14"/>
+            <line x1="2" y1="8" x2="14" y2="8"/>
+          </svg>
+          Tambah Baris
+        </button>
+
+        <div class="summary">
+          <div class="summary-item">
+            <span class="summary-label">Aset</span>
+            <span class="summary-value" id="asset-count">0</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Total</span>
+            <span class="summary-value" id="total-sum">0</span>
+          </div>
+          <div class="summary-item">
+            <span class="summary-label">Bobot</span>
+            <span class="summary-value" id="total-weight">0%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <footer>portfolio allocation tracker &mdash; github pages ready</footer>
+  </div>
+
+  <script>
+    let rowId = 0;
+
+    function addRow() {
+      const id = rowId++;
+      const container = document.getElementById('rows');
+
+      const row = document.createElement('div');
+      row.className = 'row';
+      row.dataset.id = id;
+      row.innerHTML = `
+        <input type="text" placeholder="BBCA" oninput="recalc()" />
+        <input type="number" placeholder="0" min="0" oninput="recalc()" />
+        <div class="weight-cell">
+          <div class="bar"></div>
+          <span>—</span>
+        </div>
+        <button class="del-btn" onclick="deleteRow(${id})" title="Hapus">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+            <line x1="1" y1="1" x2="11" y2="11"/>
+            <line x1="11" y1="1" x2="1" y2="11"/>
+          </svg>
+        </button>
+      `;
+
+      container.appendChild(row);
+      row.querySelector('input[type="text"]').focus();
+      recalc();
+    }
+
+    function deleteRow(id) {
+      const rows = document.querySelectorAll('.row');
+      if (rows.length <= 1) return; // keep at least 1 row
+      const row = document.querySelector(`.row[data-id="${id}"]`);
+      if (row) {
+        row.style.transition = 'opacity 0.2s, transform 0.2s';
+        row.style.opacity = '0';
+        row.style.transform = 'translateX(10px)';
+        setTimeout(() => { row.remove(); recalc(); }, 200);
+      }
+    }
+
+    function recalc() {
+      const rows = document.querySelectorAll('.row');
+      let total = 0;
+      let assetCount = 0;
+
+      rows.forEach(row => {
+        const val = parseFloat(row.querySelector('input[type="number"]').value) || 0;
+        if (val > 0) { total += val; assetCount++; }
+      });
+
+      rows.forEach(row => {
+        const val = parseFloat(row.querySelector('input[type="number"]').value) || 0;
+        const weightCell = row.querySelector('.weight-cell');
+        const bar = weightCell.querySelector('.bar');
+        const label = weightCell.querySelector('span');
+
+        if (total > 0 && val > 0) {
+          const pct = (val / total) * 100;
+          label.textContent = pct.toFixed(1) + '%';
+          bar.style.width = pct + '%';
+        } else {
+          label.textContent = '—';
+          bar.style.width = '0%';
+        }
+      });
+
+      // Update summary
+      document.getElementById('asset-count').textContent = assetCount;
+      document.getElementById('total-sum').textContent = total.toLocaleString('id-ID');
+
+      const totalWeightEl = document.getElementById('total-weight');
+      if (total > 0) {
+        totalWeightEl.textContent = '100%';
+        totalWeightEl.className = 'summary-value valid';
+      } else {
+        totalWeightEl.textContent = '0%';
+        totalWeightEl.className = 'summary-value';
+      }
+    }
+
+    // Init with 1 row
+    addRow();
+  </script>
+</body>
+</html>
