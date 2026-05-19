@@ -150,6 +150,35 @@
       font-size: 10px;
     }
 
+    .table-head span.sortable {
+      cursor: pointer;
+      user-select: none;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: color 0.15s;
+    }
+
+    .table-head span.sortable:hover {
+      color: var(--accent);
+    }
+
+    .table-head span.sortable.active {
+      color: var(--accent);
+    }
+
+    .sort-icon {
+      opacity: 0.3;
+      font-style: normal;
+      font-size: 9px;
+      transition: opacity 0.15s;
+    }
+
+    .table-head span.sortable:hover .sort-icon,
+    .table-head span.sortable.active .sort-icon {
+      opacity: 1;
+    }
+
     /* Rows container */
     #rows {
       display: flex;
@@ -378,15 +407,15 @@
     <header>
       <div class="tag">Your Personal</div>
       <h1>Portfolio Allocator</span></h1>
-      <p class="subtitle">Masukkan kode & jumlah, bobot akan dihitung otomatis.</p>
+      <p class="subtitle">Masukkan kode & jumlah, bobot akan dihitung otomatis</p>
     </header>
 
     <div class="card">
       <div class="table-head">
         <span>No</span>
-        <span>Kode</span>
-        <span>Jumlah</span>
-        <span>Percentage</span>
+        <span class="sortable" onclick="sortBy('code')" id="th-code">Kode <em class="sort-icon">↕</em></span>
+        <span class="sortable" onclick="sortBy('amount')" id="th-amount">Jumlah <em class="sort-icon">↕</em></span>
+        <span class="sortable" onclick="sortBy('pct')" id="th-pct">Percentage <em class="sort-icon">↕</em></span>
         <span></span>
       </div>
 
@@ -511,6 +540,59 @@
     }
 
     function showSaveIndicator(saved) {}
+
+    let sortState = { key: null, dir: 1 }; // dir: 1=asc, -1=desc
+
+    function sortBy(key) {
+      const container = document.getElementById('rows');
+      const rows = Array.from(container.querySelectorAll('.row'));
+
+      // Toggle direction if same key
+      if (sortState.key === key) {
+        sortState.dir *= -1;
+      } else {
+        sortState.key = key;
+        sortState.dir = 1;
+      }
+
+      // Calculate total for pct sorting
+      let total = 0;
+      rows.forEach(r => {
+        total += parseFloat(r.querySelector('input[type="number"]').value) || 0;
+      });
+
+      rows.sort((a, b) => {
+        let valA, valB;
+        if (key === 'code') {
+          valA = a.querySelector('input[type="text"]').value.toLowerCase();
+          valB = b.querySelector('input[type="text"]').value.toLowerCase();
+          return sortState.dir * valA.localeCompare(valB);
+        } else if (key === 'amount') {
+          valA = parseFloat(a.querySelector('input[type="number"]').value) || 0;
+          valB = parseFloat(b.querySelector('input[type="number"]').value) || 0;
+        } else if (key === 'pct') {
+          valA = total > 0 ? (parseFloat(a.querySelector('input[type="number"]').value) || 0) / total : 0;
+          valB = total > 0 ? (parseFloat(b.querySelector('input[type="number"]').value) || 0) / total : 0;
+        }
+        return sortState.dir * (valA - valB);
+      });
+
+      // Re-append in sorted order
+      rows.forEach(r => container.appendChild(r));
+
+      // Update header icons
+      ['code', 'amount', 'pct'].forEach(k => {
+        const th = document.getElementById('th-' + k);
+        const icon = th.querySelector('.sort-icon');
+        th.classList.remove('active');
+        icon.textContent = '↕';
+      });
+      const activeTh = document.getElementById('th-' + key);
+      activeTh.classList.add('active');
+      activeTh.querySelector('.sort-icon').textContent = sortState.dir === 1 ? '↑' : '↓';
+
+      recalc();
+    }
 
     function recalc() {
       const rows = document.querySelectorAll('.row');
